@@ -260,20 +260,27 @@ Given("I move the field named {string} after the field named {string}", (field_n
  * @description Interactions - Drag and drop the field to the int position
  */
 Given("I drag (on )the field variable named {string} {aboveBelow} the field variable named {string}", (fieldToMove, aboveBelow, fieldAfter) => {
-    let field_index
+    
+    ['Variable', 'Field Name'].forEach((label) => {
+        let field_index
+        cy.get('table[id*=design-]').then((rows) => {
+            for(let i = 0; i < rows.length; i++){
+                cy.wrap(rows.eq(i)).then((row) =>{
+                    if(row.text().includes(`${label}: ${fieldAfter}\n`)){
+                        field_index = aboveBelow === "above" ? i : i + 1
+                    }
+                })
+            }
+        }).then(() => {
+            if(field_index === undefined){
+                // We must be in the forEach iteration where 'label' does not match this REDCap version
+                return
+            }
 
-    cy.get('table[id*=design-]').then((rows) => {
-        for(let i = 0; i < rows.length; i++){
-            cy.wrap(rows.eq(i)).then((row) =>{
-                if(row.text().includes(`Variable: ${fieldAfter}\n`)){
-                    field_index = aboveBelow === "above" ? i : i + 1
-                }
+            cy.get('table[id*=design-]').contains(`${label}: ${fieldToMove}`).parents('table[id*=design-]').then((row) => {
+                cy.get('table[id*=design-]').eq(field_index).as('target')
+                cy.wrap(row).find('[draggable=field]').dragTo('@target')
             })
-        }
-    }).then(() => {
-        cy.get('table[id*=design-]').contains(`Variable: ${fieldToMove}`).parents('table[id*=design-]').then((row) => {
-            cy.get('table[id*=design-]').eq(field_index).as('target')
-            cy.wrap(row).dragTo('@target')
         })
     })
 })
